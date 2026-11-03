@@ -13,6 +13,22 @@ settings:
   # de ta dernière position "active". 0 = tout mouvement compte.
   movement-radius: 3.0
 
+# Temps d'inactivité PAR GRADE (en secondes).
+# Le joueur reçoit la plus grande valeur parmi les grades qu'il possède ;
+# sans aucun de ces grades, c'est settings.idle-limit qui s'applique.
+# "permission" : n'importe quelle permission. Avec LuckPerms, "group.<nom du groupe>" fonctionne.
+# Tu peux ajouter, renommer ou supprimer des grades librement.
+ranks:
+  vip:
+    permission: "group.vip"
+    idle-limit: 600            # 10 minutes
+  mvp:
+    permission: "group.mvp"
+    idle-limit: 900            # 15 minutes
+  legend:
+    permission: "group.legend"
+    idle-limit: 1800           # 30 minutes
+
 # Ce qui compte comme "activité" (remet le compteur à zéro).
 # Pour détecter les joueurs qui MINENT / CLIQUENT EN BOUCLE SANS BOUGER, laisse blocks, interact,
 # inventory et held-item sur false : seul un vrai déplacement (ou le chat/commandes) annule l'AFK.
