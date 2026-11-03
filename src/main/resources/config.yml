@@ -1,0 +1,50 @@
+# ============================================================
+#  AntiAFK - configuration
+#  Messages : voir messages.yml (couleurs &c, &#ff8800, MiniMessage <red>...)
+# ============================================================
+settings:
+  idle-limit: 300              # secondes d'inactivité avant l'action (300 = 5 minutes)
+  warnings: [60, 30, 10, 5, 4, 3, 2, 1]   # avertissements, en secondes RESTANTES avant l'action
+  disabled-worlds: []          # mondes où le plugin ne fait rien. ex: [world_creative]
+  ignore-creative: false       # ignorer les joueurs en créatif
+  ignore-spectator: true       # ignorer les joueurs en spectateur
+  # Anti-machines AFK (piscines à eau, boucles de déplacement, jiggler...) :
+  # un déplacement ne compte comme activité que s'il t'éloigne de plus de X blocs
+  # de ta dernière position "active". 0 = tout mouvement compte.
+  movement-radius: 3.0
+
+# Ce qui compte comme "activité" (remet le compteur à zéro).
+# Pour détecter les joueurs qui MINENT / CLIQUENT EN BOUCLE SANS BOUGER, laisse blocks, interact,
+# inventory et held-item sur false : seul un vrai déplacement (ou le chat/commandes) annule l'AFK.
+# Mets blocks/interact à true si tu veux qu'un joueur qui construit sur place ne soit jamais AFK.
+activity:
+  movement: true               # déplacement réel (voir movement-radius)
+  rotation: false              # bouger la caméra seule
+  chat: true
+  commands: true
+  interact: false              # clics sur blocs / dans l'air
+  blocks: false                # casser / poser un bloc
+  inventory: false             # clics dans un inventaire
+  held-item: false             # changer d'objet en main
+  # Les téléportations ne comptent jamais comme de l'activité.
+
+warning:
+  chat: true                   # message de chat (messages.yml -> warning.chat)
+  actionbar: true              # compte à rebours chaque seconde dans l'actionbar
+  title: true                  # titre + sous-titre (messages.yml -> warning.title / subtitle)
+  sound:
+    enabled: true
+    key: "block.note_block.pling"
+    volume: 1.0
+    pitch: 1.0
+
+# Que se passe-t-il quand le temps est écoulé ?
+#  PLAYER  = le joueur exécute la/les commande(s) lui-même (comme s'il tapait /warp zoneafk)
+#  CONSOLE = la console exécute la/les commande(s) (utilise {player})
+#  KICK    = expulsion
+# Une fois envoyé en zone AFK, le joueur n'est plus surveillé tant qu'il n'a pas bougé / écrit.
+action:
+  type: PLAYER
+  commands:
+    - "warp zoneafk"
+    # Exemple en mode CONSOLE avec EssentialsX : "warp zoneafk {player}"

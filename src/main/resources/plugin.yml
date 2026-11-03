@@ -1,0 +1,17 @@
+name: AntiAFK
+version: 1.0.0
+main: fr.antiafk.AntiAfkPlugin
+api-version: '26.2'
+description: Détecte les joueurs inactifs (et les machines AFK), avertit puis expulse ou exécute des commandes
+commands:
+  antiafk:
+    description: Commandes AntiAFK
+    aliases: [afk-admin]
+    usage: /antiafk help
+permissions:
+  antiafk.admin:
+    description: Commandes d'administration
+    default: op
+  antiafk.bypass:
+    description: Ne jamais être détecté comme AFK
+    default: op

@@ -1,0 +1,39 @@
+# ============================================================
+#  AntiAFK - messages
+#  Couleurs : &c &b &l &#ff8800 et MiniMessage (<red>, <gradient:red:gold>...</gradient>)
+#  Placeholders : {prefix} {player} {seconds} {time} {idle} {limit}
+# ============================================================
+prefix: "&8[&cAntiAFK&8] "
+
+no-permission: "{prefix}&cTu n'as pas la permission."
+reloaded: "{prefix}&aConfiguration rechargée."
+player-not-found: "{prefix}&cJoueur introuvable : &f{name}"
+check: "{prefix}&f{name} &7est inactif depuis &e{idle} &7(limite : &e{limit}&7)."
+check-exempt: "{prefix}&f{name} &7est exempté (bypass, monde désactivé ou mode de jeu ignoré)."
+reset-done: "{prefix}&aLe compteur de &f{name} &aa été remis à zéro."
+usage-check: "{prefix}&cUsage : /antiafk check <joueur>"
+usage-reset: "{prefix}&cUsage : /antiafk reset <joueur>"
+help:
+  - "&8&m          &r &cAntiAFK &8&m          "
+  - "&e/antiafk check <joueur> &7- Voir l'inactivité d'un joueur"
+  - "&e/antiafk reset <joueur> &7- Remettre son compteur à zéro"
+  - "&e/antiafk reload &7- Recharger la configuration"
+
+warning:
+  chat: "{prefix}&cTu es inactif ! Tu seras envoyé en zone AFK dans &e{seconds}s&c. Bouge pour annuler."
+  actionbar: "&c⚠ Inactif &8| &7Zone AFK dans &e{time}"
+  title: "&c&lAFK ?"
+  subtitle: "&7Bouge dans &e{seconds}s &7pour éviter la zone AFK !"
+  title-times: [5, 40, 10]     # fondu entrant, durée, fondu sortant (ticks)
+
+back: "{prefix}&aInactivité annulée, bon retour !"
+
+# Envoi en zone AFK (action.type PLAYER / CONSOLE)
+afk:
+  sent: "{prefix}&cTu as été envoyé en zone AFK car tu étais inactif."
+  broadcast: ""                  # ex: "{prefix}&e{player} &7a été envoyé en zone AFK." ("" = aucune annonce)
+  left: "{prefix}&aTu n'es plus AFK."
+
+kick:
+  message: "&cTu as été expulsé pour inactivité.\n&7Reviens quand tu veux !"
+  broadcast: "{prefix}&e{player} &7a été expulsé pour inactivité."   # "" = aucune annonce
