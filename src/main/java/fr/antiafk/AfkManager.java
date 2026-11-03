@@ -24,9 +24,11 @@ public final class AfkManager {
     private final AntiAfkPlugin plugin;
     private final Map<UUID, Data> data = new ConcurrentHashMap<>();
 
-    private int limit = 300;
-    private int[] warnings = new int[0];
-    private int maxWarn;
+    private record Rank(String id, String permission, int limit) {}
+
+    private int limit = 300;                               // temps par défaut (sans grade)
+    private List<Integer> rawWarnings = List.of();
+    private final List<Rank> ranks = new ArrayList<>();
     private double radiusSq;
     private final Map<String, Boolean> activity = new HashMap<>();
     private final Set<String> disabledWorlds = new HashSet<>();
@@ -36,11 +38,24 @@ public final class AfkManager {
     public void load() {
         FileConfiguration c = plugin.getConfig();
         limit = Math.max(5, c.getInt("settings.idle-limit", 300));
-        warnings = c.getIntegerList("settings.warnings").stream()
-                .filter(i -> i > 0 && i < limit)
+        rawWarnings = c.getIntegerList("settings.warnings").stream()
+                .filter(i -> i > 0)
                 .sorted(Comparator.reverseOrder())
-                .mapToInt(Integer::intValue).toArray();
-        maxWarn = warnings.length == 0 ? 0 : warnings[0];
+                .toList();
+
+        ranks.clear();
+        var sec = c.getConfigurationSection("ranks");
+        if (sec != null) {
+            for (String id : sec.getKeys(false)) {
+                String perm = sec.getString(id + ".permission", "");
+                int lim = sec.getInt(id + ".idle-limit", 0);
+                if (perm.isBlank() || lim < 5) {
+                    plugin.getLogger().warning("ranks." + id + " ignoré (permission vide ou idle-limit < 5)");
+                    continue;
+                }
+                ranks.add(new Rank(id, perm, lim));
+            }
+        }
         double r = Math.max(0, c.getDouble("settings.movement-radius", 3.0));
         radiusSq = r * r;
         disabledWorlds.clear();
@@ -96,6 +111,20 @@ public final class AfkManager {
 
     public long idleSeconds(Player p) { return (System.currentTimeMillis() - data(p.getUniqueId()).last) / 1000; }
     public int limit() { return limit; }
+
+    /** Temps d'inactivité autorisé pour ce joueur : le plus grand parmi ses grades (et le défaut). */
+    public int limitFor(Player p) {
+        int best = limit;
+        for (Rank r : ranks) {
+            if (r.limit() > best && p.hasPermission(r.permission())) best = r.limit();
+        }
+        return best;
+    }
+
+    /** Seuils d'avertissement valides pour une limite donnée (triés du plus grand au plus petit). */
+    private int[] warningsFor(int lim) {
+        return rawWarnings.stream().filter(w -> w < lim).mapToInt(Integer::intValue).toArray();
+    }
     public boolean isAfk(Player p) { return data(p.getUniqueId()).afk; }
 
     public void tick() {
@@ -104,42 +133,46 @@ public final class AfkManager {
             Data d = data(p.getUniqueId());
             if (isExempt(p)) { d.last = now; d.warned.clear(); d.afk = false; continue; }
 
+            int lim = limitFor(p);
+            int[] ws = warningsFor(lim);
+            int maxWarn = ws.length == 0 ? 0 : ws[0];
+
             // Déjà envoyé en zone AFK : on attend une vraie activité avant de reprendre la surveillance
             if (d.afk) {
                 if (d.last > d.afkSince) {
                     d.afk = false;
                     d.warned.clear();
-                    p.sendMessage(plugin.msg("afk.left", placeholders(p, limit, 0)));
+                    p.sendMessage(plugin.msg("afk.left", placeholders(p, lim, 0, lim)));
                 }
                 continue;
             }
 
             long idle = (now - d.last) / 1000;
-            long remaining = limit - idle;
+            long remaining = lim - idle;
 
             if (remaining > maxWarn) {
                 if (!d.warned.isEmpty()) {            // le joueur est revenu avant l'action
                     d.warned.clear();
-                    p.sendMessage(plugin.msg("back", placeholders(p, remaining, idle)));
+                    p.sendMessage(plugin.msg("back", placeholders(p, remaining, idle, lim)));
                 }
                 continue;
             }
             if (remaining <= 0) {
-                boolean kicked = execute(p, idle);
+                boolean kicked = execute(p, idle, lim);
                 d.warned.clear();
                 d.last = System.currentTimeMillis();
                 if (!kicked) { d.afk = true; d.afkSince = d.last; }
                 continue;
             }
 
-            Map<String, String> ph = placeholders(p, remaining, idle);
+            Map<String, String> ph = placeholders(p, remaining, idle, lim);
             if (plugin.getConfig().getBoolean("warning.actionbar", true)) {
                 p.sendActionBar(plugin.msg("warning.actionbar", ph));
             }
             Integer hit = null;
-            for (int w : warnings) if (remaining <= w && (hit == null || w < hit)) hit = w;
+            for (int w : ws) if (remaining <= w && (hit == null || w < hit)) hit = w;
             if (hit != null && !d.warned.contains(hit)) {
-                for (int w : warnings) if (w >= hit) d.warned.add(w);
+                for (int w : ws) if (w >= hit) d.warned.add(w);
                 warn(p, ph);
             }
         }
@@ -161,8 +194,8 @@ public final class AfkManager {
     }
 
     /** @return true si le joueur a été expulsé */
-    private boolean execute(Player p, long idle) {
-        Map<String, String> ph = placeholders(p, 0, idle);
+    private boolean execute(Player p, long idle, int lim) {
+        Map<String, String> ph = placeholders(p, 0, idle, lim);
         String type = plugin.getConfig().getString("action.type", "PLAYER").toUpperCase(Locale.ROOT);
 
         if (type.equals("KICK")) {
@@ -184,13 +217,13 @@ public final class AfkManager {
         return false;
     }
 
-    public Map<String, String> placeholders(Player p, long remaining, long idle) {
+    public Map<String, String> placeholders(Player p, long remaining, long idle, int lim) {
         Map<String, String> m = new HashMap<>();
         m.put("player", p.getName());
         m.put("seconds", String.valueOf(Math.max(0, remaining)));
         m.put("time", format(Math.max(0, remaining)));
         m.put("idle", format(idle));
-        m.put("limit", format(limit));
+        m.put("limit", format(lim));
         return m;
     }
 

@@ -32,7 +32,7 @@ public final class AntiAfkCommand implements TabExecutor {
                 if (t == null) { s.sendMessage(plugin.msg("player-not-found", Map.of("name", a[1]))); return true; }
                 if (m.isExempt(t)) { s.sendMessage(plugin.msg("check-exempt", Map.of("name", t.getName()))); return true; }
                 s.sendMessage(plugin.msg("check", Map.of("name", t.getName(),
-                        "idle", AfkManager.format(m.idleSeconds(t)), "limit", AfkManager.format(m.limit()))));
+                        "idle", AfkManager.format(m.idleSeconds(t)), "limit", AfkManager.format(m.limitFor(t)))));
             }
             case "reset" -> {
                 if (a.length < 2) { s.sendMessage(plugin.msg("usage-reset", null)); return true; }
